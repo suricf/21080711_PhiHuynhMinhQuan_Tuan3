@@ -1,72 +1,90 @@
-import { StyleSheet, Text, View, ScrollView, Image, TextInput, TouchableOpacity, FlatList } from 'react-native';
-import React, { useState } from 'react';
+import { StyleSheet, Text, View, ScrollView, Image, TouchableOpacity, FlatList } from 'react-native';
+import React, { useState, useEffect } from 'react';
 
-export default function Screen_03() {
-  const [data, setData] = useState([
-    { key: '1', type: 'Vegetable', name: 'Apple', price: "28.00", image: require('../assets/Data/Image_101.png'), sl: 1 },
-    { key: '1', type: 'Vegetable', name: 'Pear', price: "28.00", image: require('../assets/Data/Image_102.png'), sl: 2 },
-    { key: '1', type: 'Vegetable', name: 'Coconut', price: '28.00', image: require('../assets/Data/Image_103.png'), sl: 3 },
-    { key: '1', type: 'Vegetable', name: 'Pear', price: "28.00", image: require('../assets/Data/Image_105.png'), sl: 1 },
-    { key: '1', type: 'Vegetable', name: 'Coconut', price: '28.00', image: require('../assets/Data/Image_106.png'), sl: 1 },
-    { key: '1', type: 'Vegetable', name: 'Coconut', price: '28.00', image: require('../assets/Data/Image_107.png'), sl: 4 },
-    { key: '1', type: 'Vegetable', name: 'Pear', price: "28.00", image: require('../assets/Data/Image_105.png'), sl: 1 },
-    { key: '1', type: 'Seafood', name: 'Seafood 1', price: '28.00', image: require('../assets/Data/Image_95.png') },
-    { key: '1', type: 'Seafood', name: 'Seafood 2', price: '28.00', image: require('../assets/Data/Image_95.png') },
-    { key: '1', type: 'Seafood', name: 'Seafood 3', price: '28.00', image: require('../assets/Data/Image_95.png') },
-    { key: '1', type: 'Seafood', name: 'Seafood 4', price: '28.00', image: require('../assets/Data/Image_95.png') },
-    { key: '1', type: 'Seafood', name: 'Seafood 5', price: '28.00', image: require('../assets/Data/Image_95.png') },
-    { key: '1', type: 'Drink', name: 'Drink 1', price: '28.00', image: require('../assets/Data/Image_96.png') },
-    { key: '1', type: 'Drink', name: 'Drink 2', price: '28.00', image: require('../assets/Data/Image_96.png') },
-    { key: '1', type: 'Drink', name: 'Drink 3', price: '28.00', image: require('../assets/Data/Image_96.png') },
-    { key: '1', type: 'Drink', name: 'Drink 4', price: '28.00', image: require('../assets/Data/Image_96.png') },
-    { key: '1', type: 'Drink', name: 'Drink 5', price: '28.00', image: require('../assets/Data/Image_96.png') },
-    { key: '1', type: 'Drink', name: 'Drink 6', price: '28.00', image: require('../assets/Data/Image_96.png') }
-  ]);
+export default function Screen_03({ navigation, route }) {
+  const { product } = route.params || {}; // Lấy dữ liệu sản phẩm từ Screen_02
+  const [cart, setCart] = useState([]);
 
-  const [type, setType] = useState('Vegetable');
-  const [selectedBtn, setSelectedBtn] = useState("Vegetable");
-  const [soluong, setSoluong] = useState(1);
+  useEffect(() => {
+    if (product) {
+      // Kiểm tra xem sản phẩm đã có trong giỏ hàng chưa
+      const existingProduct = cart.find(item => item.key === product.key);
+      if (existingProduct) {
+        // Nếu sản phẩm đã có, chỉ tăng số lượng
+        setCart(cart.map(item => item.key === product.key
+          ? { ...item, quantity: item.quantity + product.quantity }
+          : item
+        ));
+      } else {
+        // Nếu sản phẩm chưa có, thêm vào giỏ hàng
+        setCart([...cart, product]);
+      }
+    }
+  }, [product]);
+
+  // Hàm để tăng số lượng sản phẩm
+  const increaseQuantity = (key) => {
+    setCart(cart.map(item => item.key === key
+      ? { ...item, quantity: item.quantity + 1 }
+      : item
+    ));
+  };
+
+  // Hàm để giảm số lượng sản phẩm
+  const decreaseQuantity = (key) => {
+    setCart(cart.map(item => item.key === key && item.quantity > 1
+      ? { ...item, quantity: item.quantity - 1 }
+      : item
+    ));
+  };
+
+  // Tính tổng tiền
+  const calculateTotal = () => {
+    return cart.reduce((sum, item) => sum + (parseFloat(item.price) * item.quantity), 0).toFixed(2);
+  };
 
   return (
-    <ScrollView stickyHeaderIndices={[0, -1]}>
+    <ScrollView>
       <View style={styles.container}>
-        <TouchableOpacity onPress={() => { navigation.navigate("Screen_02") }}>
+        <TouchableOpacity onPress={() => navigation.navigate("Screen_02")}>
           <Image source={require('../assets/Data/Image_183.png')} style={{ width: 25, height: 25 }} />
         </TouchableOpacity>
-        <Text style={{ fontSize: 25, color: 'green', fontWeight: 'bold' }}>My Basket</Text>
+        <Text style={{ fontSize: 25, color: 'green', fontWeight: 'bold', marginVertical: 20 }}>My Basket</Text>
+
+        {/* Hiển thị giỏ hàng */}
         <FlatList
-          data={data.filter((item) => item.type == type)}
+          data={cart}
+          keyExtractor={(item) => item.key.toString()}
           renderItem={({ item }) => (
-            <View style={{ width: '100%', marginHorizontal: '2.5%', padding: 15, borderWidth: 1, flexDirection: 'row', alignItems: 'center' }}>
-              <Image source={item.image} style={{ width: 70, height: 70, marginRight: 10 }} resizeMode='contain' />
+            <View style={styles.cartItem}>
+              <Image source={item.image} style={styles.cartItemImage} resizeMode='contain' />
               <View>
-                <Text style={{ fontSize: 25, fontWeight: 'bold', color: 'green' }}>{item.price}</Text>
-                <Text style={{ fontSize: 18, color: 'silver' }}>{item.name}</Text>
-                <View style={{ flexDirection: 'row' }}>
-                  <Image source={require('../assets/Data/Image_180.png')} style={{ width: 15, height: 15, marginTop: 10 }} />
-                  <Image source={require('../assets/Data/Image_180.png')} style={{ width: 15, height: 15, marginTop: 10 }} />
-                  <Image source={require('../assets/Data/Image_180.png')} style={{ width: 15, height: 15, marginTop: 10 }} />
-                  <Image source={require('../assets/Data/Image_180.png')} style={{ width: 15, height: 15, marginTop: 10 }} />
-                  <Image source={require('../assets/Data/Image_180.png')} style={{ width: 15, height: 15, marginTop: 10 }} />
+                <Text style={styles.itemName}>{item.name}</Text>
+                <Text style={styles.itemPrice}>Price: ${item.price}</Text>
+                <View style={styles.quantityContainer}>
+                  <TouchableOpacity onPress={() => decreaseQuantity(item.key)}>
+                    <Image source={require('../assets/Data/Image_176.png')} style={styles.quantityIcon} />
+                  </TouchableOpacity>
+                  <Text style={styles.quantityText}>{item.quantity}</Text>
+                  <TouchableOpacity onPress={() => increaseQuantity(item.key)}>
+                    <Image source={require('../assets/Data/Image_175.png')} style={styles.quantityIcon} />
+                  </TouchableOpacity>
                 </View>
-              </View>
-              <View style={{ marginLeft: 140, flexDirection: 'row', alignItems: 'center' }}>
-                <Image source={require('../assets/Data/Image_176.png')} style={{ width: 15, height: 15, marginRight: 10 }} />
-                <Text style={{ fontSize: 15 }}>{item.sl}</Text>
-                <Image source={require('../assets/Data/Image_175.png')} style={{ width: 15, height: 15, marginLeft: 10 }} />
               </View>
             </View>
           )}
         />
-        <View style={{ justifyContent: 'center', width: '100%' }}>
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginHorizontal: 18 }}>
-            <Text style={{ fontSize: 30 }}>Total</Text>
-            <Text style={{ fontSize: 30 }}>$ 320.00</Text>
-          </View>
-          <TouchableOpacity style={styles.button} onPress={() => { navigation.navigate("Screen_02") }}>
-            <Text style={{ fontSize: 20, color: 'white' }}>Payment</Text>
-          </TouchableOpacity>
+
+        {/* Tổng tiền */}
+        <View style={styles.totalContainer}>
+          <Text style={styles.totalText}>Total</Text>
+          <Text style={styles.totalText}>${calculateTotal()}</Text>
         </View>
+
+        {/* Nút thanh toán */}
+        <TouchableOpacity style={styles.button} onPress={() => navigation.navigate("Screen_01")}>
+          <Text style={{ fontSize: 20, color: 'white' }}>Payment</Text>
+        </TouchableOpacity>
       </View>
     </ScrollView>
   );
@@ -76,8 +94,54 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',
+    padding: 20,
+  },
+  cartItem: {
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    marginVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#ccc',
+    paddingBottom: 10,
+  },
+  cartItemImage: {
+    width: 70,
+    height: 70,
+    marginRight: 15,
+  },
+  itemName: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: 'green',
+  },
+  itemPrice: {
+    fontSize: 16,
+    color: 'gray',
+  },
+  quantityContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  quantityIcon: {
+    width: 20,
+    height: 20,
+    marginHorizontal: 10,
+  },
+  quantityText: {
+    fontSize: 18,
+  },
+  totalContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginVertical: 20,
+    borderTopWidth: 1,
+    borderTopColor: '#ccc',
+    paddingTop: 20,
+  },
+  totalText: {
+    fontSize: 24,
+    fontWeight: 'bold',
   },
   button: {
     backgroundColor: 'green',
@@ -86,7 +150,7 @@ const styles = StyleSheet.create({
     height: 50,
     justifyContent: 'center',
     alignItems: 'center',
-    marginLeft: 90,
+    alignSelf: 'center',
     marginVertical: 20,
   }
 });

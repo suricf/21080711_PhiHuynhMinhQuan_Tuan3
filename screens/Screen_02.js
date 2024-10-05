@@ -1,5 +1,5 @@
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View, ScrollView, Image, TextInput, TouchableOpacity, FlatList } from 'react-native';
+import { StyleSheet, Text, View, ScrollView, Image, TextInput, TouchableOpacity, FlatList, Modal } from 'react-native';
 import React, { useState } from 'react';
 
 export default function Screen_02({ navigation }) {
@@ -25,9 +25,22 @@ export default function Screen_02({ navigation }) {
   ]);
 
   const [type, setType] = useState("Vegetable");
-  const [selectedBtn, setSelectedBtn] = useState("Vegetable");
   const [initialItemCount, setInitialItemCount] = useState(6);
 
+  const [modalVisible, setModalVisible] = useState(false);
+  const [selectedItem, setSelectedItem] = useState(null); // Sản phẩm được chọn
+  const [quantity, setQuantity] = useState(1); // Số lượng mặc định
+  const openModal = (item) => {
+    setSelectedItem(item);
+    setModalVisible(true);
+  };
+  const confirmPurchase = () => {
+    setModalVisible(false);
+    if (selectedItem) {
+      const productWithQuantity = { ...selectedItem, quantity }; // Thêm số lượng vào sản phẩm
+      navigation.navigate("Screen_03", { product: productWithQuantity }); // Điều hướng với sản phẩm
+    }
+  };
   return (
     <ScrollView stickyHeaderIndices={[0]}>
       <View style={{
@@ -120,7 +133,7 @@ export default function Screen_02({ navigation }) {
             marginVertical: 10,
             padding: 15,
           }}>
-            <TouchableOpacity onPress={() => { navigation.navigate("Screen_03") }}>
+            <TouchableOpacity onPress={() => openModal(item)}>
               <Image source={item.image} style={{ width: 150, height: 150 }} resizeMode='contain' />
             </TouchableOpacity>
             <Text style={{ fontSize: 20, fontWeight: 'bold', marginTop: 10 }}>{item.name}</Text>
@@ -128,6 +141,39 @@ export default function Screen_02({ navigation }) {
         )}
         numColumns={2}
       />
+      {selectedItem && (
+        <Modal visible={modalVisible} transparent={true} animationType="slide">
+          <View style={styles.modalContainer}>
+            <View style={styles.modalContent}>
+              <Text style={{ fontSize: 22, fontWeight: 'bold' }}>{selectedItem.name}</Text>
+              <Image source={selectedItem.image} style={{ width: 150, height: 150 }} resizeMode='contain' />
+              <Text style={{ fontSize: 20 }}>Price: {selectedItem.price}</Text>
+
+              {/* Chọn số lượng */}
+              <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 20 }}>
+                <TouchableOpacity onPress={() => setQuantity(prev => Math.max(1, prev - 1))}>
+                  <Text style={styles.quantityButton}>-</Text>
+                </TouchableOpacity>
+                <Text style={{ fontSize: 20, marginHorizontal: 20 }}>{quantity}</Text>
+                <TouchableOpacity onPress={() => setQuantity(prev => prev + 1)}>
+                  <Text style={styles.quantityButton}>+</Text>
+                </TouchableOpacity>
+              </View>
+
+              {/* Xác nhận mua */}
+              <TouchableOpacity style={styles.confirmButton} onPress={confirmPurchase}>
+                <Text style={{ fontSize: 20, color: 'white' }}>Add to Cart</Text>
+              </TouchableOpacity>
+
+              {/* Đóng modal */}
+              <TouchableOpacity onPress={() => setModalVisible(false)}>
+                <Text style={styles.closeButton}>Close</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
+      )}
+
     </ScrollView>
   );
 }
@@ -138,5 +184,31 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     alignItems: 'center',
     justifyContent: 'center',
+  }, modalContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  modalContent: {
+    backgroundColor: 'white',
+    borderRadius: 10,
+    padding: 20,
+    alignItems: 'center',
+  },
+  quantityButton: {
+    fontSize: 30,
+    paddingHorizontal: 10,
+  },
+  confirmButton: {
+    backgroundColor: 'green',
+    borderRadius: 10,
+    padding: 10,
+    marginTop: 20,
+  },
+  closeButton: {
+    fontSize: 18,
+    color: 'red',
+    marginTop: 20,
   },
 });
